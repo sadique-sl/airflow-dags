@@ -1,33 +1,27 @@
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
-from datetime import datetime, timedelta
-
+###added commendt
+from datetime import datetime
 
 default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "start_date": datetime(2020, 1, 1),
-    "email": ["support@airflow.com"],
-    "email_on_failure": False,
-    "email_on_retry": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5)
-    # 'queue': 'bash_queue',
-    # 'pool': 'backfill',
-    # 'priority_weight': 10,
-    # 'end_date': datetime(2021, 1, 1),
+    'start_date': datetime(2019, 1, 1),
+    'owner': 'Airflow',
 }
 
-def parsing():
-    return True
+def process(p1):
+    print(p1)
+    return 'done'
 
-def processing():
-    return True
+with DAG(dag_id='private_dag', schedule_interval='0 0 * * *', default_args=default_args, catchup=False) as dag:
+    
+    # Tasks dynamically generated 
+    tasks = [BashOperator(task_id='task_{0}'.format(t), bash_command='sleep 60'.format(t)) for t in range(1, 4)]
 
-with DAG("simple_pipe", default_args=default_args, schedule_interval="*/5 * * * *", catchup=False) as dag:
-    t1 = PythonOperator(task_id="parsing", python_callable=parsing)
-    t2 = PythonOperator(task_id="processing", python_callable=processing)
-    t3 = BashOperator(task_id="storing", bash_command="exit 0")
+    task_4 = PythonOperator(task_id='task_4', python_callable=process, op_args=['my super parameter'])
 
-    t1 >> t2 >> 
+    task_5 = BashOperator(task_id='task_5', bash_command='echo "pipeline done"')
+
+    task_6 = BashOperator(task_id='task_6', bash_command='sleep 60')
+
+    tasks >> task_4 >> task_5 >> task_6
